@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Codery.Mediator.Sample.Api/Codery.Mediator.Sample.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Codery.Mediator.Abstractions/Codery.Mediator.Abstractions.csproj" />
+    <Project Path="src/Codery.Mediator/Codery.Mediator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Codery.Mediator.Benchmarks/Codery.Mediator.Benchmarks.csproj" />
+    <Project Path="tests/Codery.Mediator.Tests/Codery.Mediator.Tests.csproj" />
+  </Folder>
+</Solution>
