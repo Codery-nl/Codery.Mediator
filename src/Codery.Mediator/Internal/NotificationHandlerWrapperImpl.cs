@@ -11,7 +11,7 @@ internal sealed class NotificationHandlerWrapperImpl<TNotification> : Notificati
     where TNotification : INotification
 {
     /// <inheritdoc />
-    public override async Task Handle(
+    public override Task Handle(
         object notification,
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken)
@@ -19,27 +19,8 @@ internal sealed class NotificationHandlerWrapperImpl<TNotification> : Notificati
         Debug.Assert(notification is TNotification, $"Expected {typeof(TNotification).Name}, got {notification.GetType().Name}");
         var typedNotification = (TNotification)notification;
         var handlers = serviceProvider.GetServices<INotificationHandler<TNotification>>();
+        var strategy = serviceProvider.GetRequiredService<INotificationPublishStrategy>();
 
-        List<Exception>? exceptions = null;
-
-        foreach (var handler in handlers)
-        {
-            try
-            {
-                await handler.Handle(typedNotification, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                exceptions ??= [];
-                exceptions.Add(ex);
-            }
-        }
-
-        if (exceptions is { Count: > 0 })
-        {
-            throw new AggregateException(
-                $"One or more notification handlers for {typeof(TNotification).Name} threw an exception.",
-                exceptions);
-        }
+        return strategy.PublishAsync(handlers, typedNotification, cancellationToken);
     }
 }

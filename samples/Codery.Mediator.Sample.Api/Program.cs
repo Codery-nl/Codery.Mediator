@@ -27,6 +27,11 @@ app.MapGet("/weather/{city}", async (string city, ISender sender) =>
     .WithSummary("Get weather forecast for a city")
     .Produces<WeatherResponse>();
 
+app.MapGet("/weather/{city}/stream", (string city, ISender sender, CancellationToken ct) =>
+        sender.CreateStream(new GetWeatherStreamQuery(city), ct))
+    .WithName("GetWeatherStream")
+    .WithSummary("Stream weather forecasts for a city");
+
 app.MapPost("/orders", async (PlaceOrderCommand command, ISender sender) =>
     {
         await sender.Send(command);

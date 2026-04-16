@@ -15,6 +15,7 @@ public sealed class MediatorPublishTests
             _ => new TrackingHandler(log, "H1"));
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new TrackingHandler(log, "H2"));
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -28,6 +29,7 @@ public sealed class MediatorPublishTests
     public async Task Publish_WithNoHandlers_DoesNotThrow()
     {
         var services = new ServiceCollection();
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -41,6 +43,7 @@ public sealed class MediatorPublishTests
     public async Task Publish_NullNotification_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -56,6 +59,7 @@ public sealed class MediatorPublishTests
         var services = new ServiceCollection();
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new ThrowingHandler());
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -75,6 +79,7 @@ public sealed class MediatorPublishTests
         var services = new ServiceCollection();
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new CapturingHandler(ct => captured = ct));
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -96,6 +101,7 @@ public sealed class MediatorPublishTests
             _ => new ThrowingHandler());
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new TrackingHandler(log, "H3"));
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -117,6 +123,7 @@ public sealed class MediatorPublishTests
             _ => new ThrowingHandlerWithMessage("first"));
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new ThrowingHandlerWithMessage("second"));
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -135,6 +142,7 @@ public sealed class MediatorPublishTests
         var services = new ServiceCollection();
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new TrackingHandler(log, "Solo"));
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();
@@ -155,6 +163,7 @@ public sealed class MediatorPublishTests
             _ => new CancellingNotificationHandler());
         services.AddTransient<INotificationHandler<OrderPlaced>>(
             _ => new TrackingHandler(log, "H3"));
+        services.AddSingleton<INotificationPublishStrategy, SequentialNotificationPublishStrategy>();
         services.AddTransient<IMediator, Codery.Mediator.Mediator>();
         var sp = services.BuildServiceProvider();
         var mediator = sp.GetRequiredService<IMediator>();

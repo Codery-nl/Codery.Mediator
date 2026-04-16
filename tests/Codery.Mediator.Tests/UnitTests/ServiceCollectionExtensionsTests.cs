@@ -148,7 +148,12 @@ public sealed class ServiceCollectionExtensionsTests
             .Where(sd => sd.ServiceType == typeof(IPipelineBehavior<,>))
             .ToList();
 
-        behaviorRegistrations.Should().HaveCount(2);
+        // 4 = PreProcessorBehavior + LoggingBehavior + ValidationBehavior + PostProcessorBehavior
+        behaviorRegistrations.Should().HaveCount(4);
+        behaviorRegistrations[0].ImplementationType!.Name.Should().StartWith("RequestPreProcessorBehavior");
+        behaviorRegistrations[1].ImplementationType.Should().Be(typeof(Codery.Mediator.Tests.Fixtures.Behaviors.LoggingBehavior<,>));
+        behaviorRegistrations[2].ImplementationType.Should().Be(typeof(Codery.Mediator.Tests.Fixtures.Behaviors.ValidationBehavior<,>));
+        behaviorRegistrations[3].ImplementationType!.Name.Should().StartWith("RequestPostProcessorBehavior");
     }
 
     [Fact]
@@ -212,7 +217,8 @@ public sealed class ServiceCollectionExtensionsTests
             .Where(sd => sd.ServiceType == typeof(IPipelineBehavior<,>))
             .ToList();
 
-        behaviorRegistrations.Should().HaveCount(1);
+        // 3 = PreProcessorBehavior + LoggingBehavior + PostProcessorBehavior (pre/post only once)
+        behaviorRegistrations.Should().HaveCount(3);
     }
 
     [Fact]

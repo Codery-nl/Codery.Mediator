@@ -6,7 +6,7 @@ namespace Codery.Mediator;
 public interface IPublisher
 {
     /// <summary>
-    /// Publishes a notification to all registered handlers sequentially.
+    /// Publishes a notification to all registered handlers using the configured publish strategy.
     /// All handlers are invoked even if one or more throw an exception.
     /// If any handlers throw, an <see cref="AggregateException"/> is thrown after all handlers have been invoked.
     /// </summary>

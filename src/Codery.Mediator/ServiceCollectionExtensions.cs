@@ -1,4 +1,5 @@
 using System.Reflection;
+using Codery.Mediator.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -17,6 +18,7 @@ public static class ServiceCollectionExtensions
     {
         public HashSet<Assembly> ScannedAssemblies { get; } = [];
         public HashSet<Type> RegisteredBehaviorTypes { get; } = [];
+        public bool PrePostProcessorBehaviorsRegistered { get; set; }
     }
     /// <summary>
     /// Adds Codery.Mediator services and scans the specified assemblies for request and notification handlers.
@@ -77,15 +79,67 @@ public static class ServiceCollectionExtensions
             services.AddSingleton(marker);
         }
 
-        // Configure options and register pipeline behaviors (deduplicated across calls)
+        // Configure options
         var options = new MediatorOptions();
         configure(options);
 
+        // Register MediatorConfiguration as singleton (first call wins via TryAdd)
+        services.TryAddSingleton(new MediatorConfiguration
+        {
+            PolymorphicDispatchEnabled = options.PolymorphicDispatchEnabled
+        });
+
+        // Register notification publish strategy (first call wins via TryAdd)
+        services.TryAddSingleton(
+            typeof(INotificationPublishStrategy),
+            options.NotificationPublishStrategyType ?? typeof(SequentialNotificationPublishStrategy));
+
+        // Auto-register pre-processor behavior (outermost — runs first, once only)
+        if (!marker.PrePostProcessorBehaviorsRegistered)
+        {
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPreProcessorBehavior<,>));
+        }
+
+        // Register user-configured pipeline behaviors (deduplicated across calls)
         foreach (var behaviorType in options.BehaviorTypes)
         {
             if (marker.RegisteredBehaviorTypes.Add(behaviorType))
             {
                 services.AddTransient(typeof(IPipelineBehavior<,>), behaviorType);
+            }
+        }
+
+        // Auto-register post-processor behavior (innermost — runs right around handler, once only)
+        if (!marker.PrePostProcessorBehaviorsRegistered)
+        {
+            marker.PrePostProcessorBehaviorsRegistered = true;
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPostProcessorBehavior<,>));
+        }
+
+        // Register user-configured stream pipeline behaviors (deduplicated across calls)
+        foreach (var behaviorType in options.StreamBehaviorTypes)
+        {
+            if (marker.RegisteredBehaviorTypes.Add(behaviorType))
+            {
+                services.AddTransient(typeof(IStreamPipelineBehavior<,>), behaviorType);
+            }
+        }
+
+        // Register user-configured open pre-processors (deduplicated across calls)
+        foreach (var processorType in options.PreProcessorTypes)
+        {
+            if (marker.RegisteredBehaviorTypes.Add(processorType))
+            {
+                services.AddTransient(typeof(IRequestPreProcessor<>), processorType);
+            }
+        }
+
+        // Register user-configured open post-processors (deduplicated across calls)
+        foreach (var processorType in options.PostProcessorTypes)
+        {
+            if (marker.RegisteredBehaviorTypes.Add(processorType))
+            {
+                services.AddTransient(typeof(IRequestPostProcessor<,>), processorType);
             }
         }
 
@@ -99,8 +153,14 @@ public static class ServiceCollectionExtensions
 
             // Request handlers: one per request type (TryAdd = first wins)
             ScanAndRegister(services, assembly, typeof(IRequestHandler<,>), tryAdd: true);
+            // Stream request handlers: one per stream request type (TryAdd = first wins)
+            ScanAndRegister(services, assembly, typeof(IStreamRequestHandler<,>), tryAdd: true);
             // Notification handlers: multiple per notification type (Add = all registered)
             ScanAndRegister(services, assembly, typeof(INotificationHandler<>), tryAdd: false);
+            // Pre-processors: multiple per request type (Add = all registered)
+            ScanAndRegister(services, assembly, typeof(IRequestPreProcessor<>), tryAdd: false);
+            // Post-processors: multiple per request/response type (Add = all registered)
+            ScanAndRegister(services, assembly, typeof(IRequestPostProcessor<,>), tryAdd: false);
         }
 
         return services;
